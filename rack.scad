@@ -69,7 +69,7 @@ module side(u_capacity, clearance, server_depth)
   for(y = [0, u_capacity * u + 2 * support_ring_cross_beam_thickness - leg_thickness])
     translate([0, y, 0])
       color([0.8, 0.8, 0])
-	leg();
+        leg();
 
   translate([0, 0, server_depth + 2 * clearance - handle_height])
     color([1, 1, 0])
@@ -80,8 +80,8 @@ module side(u_capacity, clearance, server_depth)
     {
       cube([handle_width, u * u_capacity + 2 * support_ring_cross_beam_thickness, handle_height]);
       for(y = [-0.1, u_capacity * u + 2 * support_ring_cross_beam_thickness - 2 + 0.1])
-	translate([-0.1, y, handle_height / 2])
-	  cube([handle_width + 0.2, 2 + 0.1, handle_height / 2 + 0.1]);
+        translate([-0.1, y, handle_height / 2])
+          cube([handle_width + 0.2, 2 + 0.1, handle_height / 2 + 0.1]);
     }
 
   module leg()
