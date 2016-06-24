@@ -45,10 +45,10 @@ function standard_depth(oem="Dell") =
 support_ring_height = board(nominal_in=4);
 support_ring_side_width = board(nominal_in=2);
 support_ring_cross_beam_thickness = board(nominal_in=2);
-leg_width = board(nominal_in=2);
+leg_width = board(nominal_in=1);
 leg_thickness = board(nominal_in=4);
 handle_height = board(nominal_in=2);
-handle_width = board(nominal_in=2);
+handle_width = leg_width;
 
 module rack(u_capacity=1, clearance=6, server_depth=standard_depth(oem))
 {
@@ -69,16 +69,19 @@ module rack(u_capacity=1, clearance=6, server_depth=standard_depth(oem))
 module cap(u_capacity)
 {
   height = board(nominal_in=2);
-  width = board(nominal_in=2);
+  width = leg_width;
   depth = u_capacity * u + 2 * support_ring_cross_beam_thickness;
   curve_r = height / 4;
   leg_depth = board(nominal_in=4) / 2;
 
-  color([1, 0, 0])
-    cap_side(u_capacity);
-  translate([inner_width + 2 * support_ring_side_width + leg_width, 0, 0])
-    color([1, 0, 0])
-      cap_side(u_capacity);
+  for(x = [0, inner_width + 2 * support_ring_side_width + leg_width])
+    translate([x, 0, 0])
+      color([1, 0, 0])
+        cap_side(u_capacity);
+  for(x = [width, inner_width + 2 * support_ring_side_width])
+    translate([x, 0, 0])
+      color([0.6, 0, 0])
+        cube([width, depth, height]);
   translate([0, 0, height])
     color([0.8, 0, 0])
       cube([inner_width + 2 * support_ring_side_width + 2 * leg_width, u_capacity * u + 2 * support_ring_cross_beam_thickness, board(nominal_in=1)]);
@@ -87,7 +90,7 @@ module cap(u_capacity)
 module cap_side(u_capacity, depth_extension=0)
 {
   height = board(nominal_in=2);
-  width = board(nominal_in=2);
+  width = leg_width;
   depth = u_capacity * u + 2 * support_ring_cross_beam_thickness;
   curve_r = height / 4;
   leg_depth = board(nominal_in=4) / 2;
@@ -116,23 +119,6 @@ module cap_side(u_capacity, depth_extension=0)
       }
     }
   }
-
-  module rounded_corner(width, curve_r)
-    intersection()
-    {
-      cube([width, curve_r, curve_r]);
-      translate([width, 0, curve_r])
-        rotate([0, -90, 0])
-          cylinder(r=curve_r, h=width);
-    }
-  module negative_rounded_corner(width, curve_r)
-    difference()
-    {
-      cube([width, curve_r, curve_r]);
-      translate([-0.05, curve_r, 0])
-        rotate([0, 90, 0])
-          cylinder(r=curve_r, h=width + 0.1);
-    }
 }
 
 module side(u_capacity, clearance, server_depth)
@@ -147,16 +133,48 @@ module side(u_capacity, clearance, server_depth)
       handle();
 
   module handle()
-    difference()
+  {
+    curve_r = handle_height / 4;
+    cube([handle_width, u_capacity * u + 2 * support_ring_cross_beam_thickness, handle_height / 2]);
+    translate([0, leg_thickness / 2 + curve_r, handle_height / 2])
+      cube([handle_width, u_capacity * u + 2 * support_ring_cross_beam_thickness - leg_thickness - 2 * curve_r, handle_height / 2]);
+
+    translate([0, leg_thickness / 2 - curve_r, handle_height / 2])
+      curved();
+    translate([handle_width, u_capacity * u + 2 * support_ring_cross_beam_thickness - leg_thickness / 2 + curve_r, handle_height / 2])
+      rotate([0, 0, 180])
+      curved();
+
+    module curved()
     {
-      cube([handle_width, u * u_capacity + 2 * support_ring_cross_beam_thickness, handle_height]);
-      /* for(y = [-0.1, u_capacity * u + 2 * support_ring_cross_beam_thickness - 2 + 0.1]) */
-      /*   translate([-0.1, y, handle_height / 2]) */
-      /*     cube([handle_width + 0.2, 2 + 0.1, handle_height / 2 + 0.1]); */
-      translate([-0.1, 0, board(nominal_in=2) / 2])
-	scale([1.1, 1, 1])
-          cap_side(u_capacity, depth_extension=0.1);
+      /* translate([0, leg_thickness / 2, handle_height / 2]) */
+      /*   cube([handle_width, curve_r, curve_r]); */
+      /* translate([0, leg_thickness / 2 + curve_r, handle_height]) */
+      /*   rotate([180, 0, 0]) */
+      /*     rounded_corner(leg_width, curve_r); */
+      /* translate([0, leg_thickness / 2, handle_height - curve_r]) */
+      /*   rotate([180, 0, 0]) */
+      /*     negative_rounded_corner(leg_width, curve_r); */
+      translate([0, curve_r, 0])
+        cube([handle_width, curve_r, curve_r]);
+      translate([0, 2 * curve_r, 2 * curve_r])
+        rotate([180, 0, 0])
+          rounded_corner(leg_width, curve_r);
+      translate([0, curve_r, curve_r])
+        rotate([180, 0, 0])
+          negative_rounded_corner(leg_width, curve_r);
     }
+  }
+    /* difference() */
+    /* { */
+    /*   cube([handle_width, u * u_capacity + 2 * support_ring_cross_beam_thickness, handle_height]); */
+    /*   /\* for(y = [-0.1, u_capacity * u + 2 * support_ring_cross_beam_thickness - 2 + 0.1]) *\/ */
+    /*   /\*   translate([-0.1, y, handle_height / 2]) *\/ */
+    /*   /\*     cube([handle_width + 0.2, 2 + 0.1, handle_height / 2 + 0.1]); *\/ */
+    /*   translate([-0.1, 0, board(nominal_in=2) / 2]) */
+    /* 	scale([1.1, 1, 1]) */
+    /*       cap_side(u_capacity, depth_extension=0.1); */
+    /* } */
 
   module leg()
     cube([leg_width, leg_thickness, server_depth + 2 * clearance - handle_height]);
@@ -188,3 +206,21 @@ module rackmount_unit(u_size=1, depth=standard_depth(oem))
   translate([-(outer_width - inner_width) / 2, -1 / 8, 0])
     cube([outer_width, 1 / 8, height]);
 }
+
+module rounded_corner(width, curve_r)
+  intersection()
+  {
+    cube([width, curve_r, curve_r]);
+    translate([width, 0, curve_r])
+      rotate([0, -90, 0])
+        cylinder(r=curve_r, h=width);
+  }
+
+module negative_rounded_corner(width, curve_r)
+  difference()
+  {
+    cube([width, curve_r, curve_r]);
+    translate([-0.05, curve_r, 0])
+      rotate([0, 90, 0])
+        cylinder(r=curve_r, h=width + 0.1);
+  }
